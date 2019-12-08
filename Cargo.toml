@@ -8,7 +8,7 @@ description = "Self contained (no net/sys deps), static rust bindings to ffmpeg.
 license = "MIT"
 homepage = "https://github.com/imager-io/ffmpeg-dev-rs"
 repository = "https://github.com/imager-io/ffmpeg-dev-rs"
-# readme = "README.md"
+readme = "README.md"
 
 [dependencies]
 libc = "^0.2"

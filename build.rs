@@ -185,20 +185,30 @@ fn build() {
     extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
     let source_path = out_path.join("FFmpeg-FFmpeg-2722fc2");
     assert!(source_path.exists());
-    // CONFIGURE
-    {
-        let result = std::process::Command::new("sh")
-            .arg("-c")
-            .arg(&format!(
-                "cd {path} && ./configure --disable-programs --disable-doc",
-                path=source_path.to_str().expect("PathBuf to str"),
-            ))
-            .output()
-            .expect(&format!("ffmpeg configure script"));
-        assert!(result.status.success());
+    // SPEED UP DEV - UNLESS IN RELASE MODE
+    let already_built = {
+        STATIC_LIBS
+            .iter()
+            .map(|(_, x)| source_path.join(x))
+            .all(|x| x.exists())
+    };
+    let skip_build = already_built && !is_release_mode();
+    if !skip_build {
+        // CONFIGURE
+        {
+            let result = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(&format!(
+                    "cd {path} && ./configure --disable-programs --disable-doc",
+                    path=source_path.to_str().expect("PathBuf to str"),
+                ))
+                .output()
+                .expect(&format!("ffmpeg configure script"));
+            assert!(result.status.success());
+        }
+        // BUILD
+        run_make(&source_path, "Makefile");
     }
-    // BUILD
-    // run_make(&source_path, "Makefile");
     // LINK
     // for path in SEARCH_PATHS {
     //     println!("cargo:rustc-link-search=native={}", {
