@@ -10,3 +10,6 @@ and does not require a network connection for building.
     * This is for the purpose of being self contained, without burdening any library consumers with dependency issues.
 
 Hopefully one day the rust ecosystem will get a decent FFmpeg alternative for e.g. container muxing/demuxing.
+
+# FUTURE
+It would be interesting to experiment with compiling FFmpeg to WebAssembly. Perhaps as an alternative to static linking it could link against either a local or remote LGPL binary.
