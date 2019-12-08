@@ -11,22 +11,23 @@ use flate2::read::GzDecoder;
 // UTILS - ENVIROMENT
 ///////////////////////////////////////////////////////////////////////////////
 
+fn out_dir() -> PathBuf {
+    PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR env var"))
+}
+
 fn is_release_mode() -> bool {
-    let value = std::env::var("PROFILE")
-        .expect("missing PROFILE")
-        .to_lowercase();
-    &value == "release"
+    has_env_var_with_value("PROFILE", "release")
 }
 
 fn is_debug_mode() -> bool {
-    let value = std::env::var("PROFILE")
-        .expect("missing PROFILE")
-        .to_lowercase();
-    &value == "debug"
+    has_env_var_with_value("PROFILE", "debug")
 }
 
-fn out_dir() -> PathBuf {
-    PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR env var"))
+fn has_env_var_with_value(s: &str, v: &str) -> bool {
+    std::env::var(s)
+        .map(|x| x.to_lowercase())
+        .map(|x| x == v.to_lowercase())
+        .unwrap_or(false)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -181,10 +182,7 @@ pub const SEARCH_PATHS: &[&str] = &[
 
 fn build() {
     let out_path = out_dir();
-    // SETUP
-    extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
     let source_path = out_path.join("FFmpeg-FFmpeg-2722fc2");
-    assert!(source_path.exists());
     // SPEED UP DEV - UNLESS IN RELASE MODE
     let already_built = {
         STATIC_LIBS
@@ -192,15 +190,34 @@ fn build() {
             .map(|(_, x)| source_path.join(x))
             .all(|x| x.exists())
     };
-    let skip_build = already_built && !is_release_mode();
-    if !skip_build {
+    let mut skip_build = already_built && !is_release_mode();
+    if has_env_var_with_value("FFDEV1", "1") {
+        skip_build = false;
+    }
+    // BUILD CODE PHASE
+    if skip_build == false {
+        // SETUP
+        extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
+        assert!(source_path.exists());
         // CONFIGURE
         {
+            let configure_flags = &[
+                "--disable-programs",
+                "--disable-doc",
+                "--disable-autodetect",
+                // // APPLE
+                // "--disable-avfoundation",
+                // "--disable-appkit",
+                // "--disable-coreimage",
+                // "--disable-audiotoolbox",
+            ];
+            let configure_flags = configure_flags.join(" ");
             let result = std::process::Command::new("sh")
                 .arg("-c")
                 .arg(&format!(
-                    "cd {path} && ./configure --disable-programs --disable-doc",
+                    "cd {path} && ./configure {flags}",
                     path=source_path.to_str().expect("PathBuf to str"),
+                    flags=configure_flags,
                 ))
                 .output()
                 .expect(&format!("ffmpeg configure script"));
@@ -210,14 +227,14 @@ fn build() {
         run_make(&source_path, "Makefile");
     }
     // LINK
-    // for path in SEARCH_PATHS {
-    //     println!("cargo:rustc-link-search=native={}", {
-    //         source_path.join(path).to_str().expect("PathBuf as str")
-    //     });
-    // }
-    // for (name, _) in STATIC_LIBS {
-    //     println!("cargo:rustc-link-lib=static={}", name);
-    // }
+    for path in SEARCH_PATHS {
+        println!("cargo:rustc-link-search=native={}", {
+            source_path.join(path).to_str().expect("PathBuf as str")
+        });
+    }
+    for (name, _) in STATIC_LIBS {
+        println!("cargo:rustc-link-lib=static={}", name);
+    }
     // CODEGEN
     // let codegen = |file_name: &str, headers: &[&str]| {
     //     let codegen = bindgen::Builder::default();
