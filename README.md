@@ -1,5 +1,8 @@
 Self contained FFmpeg (sys) bindings.
 
+Does not require, or link against any FFmpeg system dependencies,
+and does not require a network connection for building.
+
 # LICENSE WARNING
 > I’m not a lawyer, furthermore I really don’t understand software licenses.
 * This codebase is MIT.
