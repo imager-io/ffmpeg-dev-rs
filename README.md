@@ -5,3 +5,5 @@ Self contained FFmpeg (sys) bindings.
 * This codebase is MIT.
 * At compile time, this library builds and statically links against LGPL code.
     * This is for the purpose of being self contained, without burdening any library consumers with dependency issues.
+
+Hopefully one day the rust ecosystem will get a decent FFmpeg alternative for e.g. container muxing/demuxing.
