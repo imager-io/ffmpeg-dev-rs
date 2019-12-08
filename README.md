@@ -1,6 +1,6 @@
 Self contained FFmpeg (sys) bindings.
 
-Does not require, or link against any FFmpeg system dependencies,
+Does not require or link against any FFmpeg system dependencies,
 and does not require a network connection for building.
 
 # LICENSE WARNING
