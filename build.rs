@@ -166,73 +166,6 @@ pub const STATIC_LIBS: &[(&str, &str)] = &[
     ),
 ];
 
-// pub const HEADER_GROUPS: &[(&str, &[&str])] = &[
-//     (
-//         "avcodec",
-//         &[
-//             "libavcodec/avcodec.h",
-//         ]
-//     ),
-//     (
-//         "avdevice",
-//         &[
-//             "libavdevice/avdevice.h",
-//         ]
-//     ),
-//     // (
-//     //     "avfilter",
-//     //     &[
-//     //         // // DEPS
-//     //         // "libavfilter/version.h",
-//     //         // EXTERNAL
-//     //         "libavfilter/avfilter.h",
-//     //     ]
-//     // ),
-//     (
-//         "avformat",
-//         &[
-//             "libavformat/avformat.h",
-//         ]
-//     ),
-//     (
-//         "avresample",
-//         &[
-//             "libavresample/avresample.h",
-//         ]
-//     ),
-//     (
-//         "avutil",
-//         &[
-//             "libavutil/avutil.h",
-//         ]
-//     ),
-//     (
-//         "swresample",
-//         &[
-//             "libswresample/swresample.h",
-//         ]
-//     ),
-//     (
-//         "swscale",
-//         &[
-//             "libswscale/swscale.h",
-//         ]
-//     ),
-// ];
-
-pub const HEADERS: &[&str] = &[
-    // EXTRA
-    // "libavutil/log.h",
-    // CORE
-    "libavcodec/avcodec.h",
-    "libavdevice/avdevice.h",
-    "libavformat/avformat.h",
-    "libavresample/avresample.h",
-    "libavutil/avutil.h",
-    "libswresample/swresample.h",
-    "libswscale/swscale.h",
-];
-
 pub const SEARCH_PATHS: &[&str] = &[
     "libavcodec",
     "libavdevice",
@@ -360,6 +293,7 @@ fn build() {
         }
     }
     // LINK
+    println!("cargo:rustc-link-search=native={}", source_path.to_str().expect("PathBuf to str"));
     for path in SEARCH_PATHS {
         println!("cargo:rustc-link-search=native={}", {
             source_path.join(path).to_str().expect("PathBuf as str")
@@ -371,6 +305,19 @@ fn build() {
     // CODEGEN
     {
         // SETUP
+        println!("rerun-if-changed=headers");
+        let ffmpeg_headers = std::fs::read("headers").expect("unable to read headers file");
+        let ffmpeg_headers = String::from_utf8(ffmpeg_headers).expect("invalid utf8 file");
+        let ffmpeg_headers = ffmpeg_headers
+            .lines()
+            .collect::<Vec<&str>>();
+        assert!(
+            ffmpeg_headers
+                .iter()
+                .map(|x| x.trim())
+                .all(|x| !x.is_empty())
+        );
+        
         let gen_file_name = "bindings_ffmpeg.rs";
         let ignored_macros = IgnoreMacros(HashSet::from_iter(vec![
             String::from("FP_INFINITE"),
@@ -386,26 +333,24 @@ fn build() {
         }
         // CONFIG
         let codegen = bindgen::Builder::default();
-        // let codegen = codegen
-        //     .header(source_path.join("libavfilter/version.h").to_str().expect("PathBuf to str"));
-        let codegen = SEARCH_PATHS
+        let codegen = codegen.clang_arg(format!("-I{}", source_path.to_str().expect("PathBuf to str")));
+        let mut missing = Vec::new();
+        let codegen = ffmpeg_headers
             .iter()
             .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
                 let path: &str = path.clone();
                 let path: PathBuf = source_path.join(path);
                 let path: &str = path.to_str().expect("PathBuf to str");
-                assert!(PathBuf::from(path).exists());
-                codegen.clang_arg(format!("-I{}", path))
+                if !PathBuf::from(path).exists() {
+                    missing.push(String::from(path));
+                    codegen
+                } else {
+                    codegen.header(path)
+                }
             });
-        let codegen = HEADERS
-            .iter()
-            .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
-                let path: &str = path.clone();
-                let path: PathBuf = source_path.join(path);
-                let path: &str = path.to_str().expect("PathBuf to str");
-                assert!(PathBuf::from(path).exists());
-                codegen.header(path)
-            });
+        if !missing.is_empty() {
+            panic!("missing headers: {:#?}", missing);
+        }
         // RUN
         codegen
             .parse_callbacks(Box::new(ignored_macros.clone()))
