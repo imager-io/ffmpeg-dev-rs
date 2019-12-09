@@ -5,9 +5,8 @@ and does not require a network connection for building.
 
 **The FFmpeg bindings now include doc comments, including struct fields!** See [here](https://docs.rs/ffmpeg-dev/0.2.2/ffmpeg_dev/sys/avcodec/struct.AVCodec.html).
 
-# NOTE
-
-For the current version (`2.0.*`), I’m currently having issues with `docs.rs` (and maybe linux builds in general). Will publish the working, somewhat stable version on `0.3`.
+# Stability
+API bindings should be **practically** stable now.
 
 # Internal Behavior
 
