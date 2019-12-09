@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use std::collections::HashSet;
 use std::convert::AsRef;
 use std::path::{PathBuf, Path};
 use std::string::ToString;
@@ -231,6 +232,25 @@ pub const SEARCH_PATHS: &[&str] = &[
 ];
 
 ///////////////////////////////////////////////////////////////////////////////
+// CODEGEN
+///////////////////////////////////////////////////////////////////////////////
+
+// See https://github.com/rust-lang/rust-bindgen/issues/687#issuecomment-450750547
+#[derive(Debug, Clone)]
+struct IgnoreMacros(HashSet<String>);
+
+impl bindgen::callbacks::ParseCallbacks for IgnoreMacros {
+    fn will_parse_macro(&self, name: &str) -> bindgen::callbacks::MacroParsingBehavior {
+        if self.0.contains(name) {
+            bindgen::callbacks::MacroParsingBehavior::Ignore
+        } else {
+            bindgen::callbacks::MacroParsingBehavior::Default
+        }
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 // BUILD PIPELINE
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -335,6 +355,18 @@ fn build() {
         println!("cargo:rustc-link-lib=static={}", name);
     }
     // CODEGEN SETUP
+    let ignored_macros = IgnoreMacros(
+        vec![
+            "FP_INFINITE".into(),
+            "FP_NAN".into(),
+            "FP_NORMAL".into(),
+            "FP_SUBNORMAL".into(),
+            "FP_ZERO".into(),
+            "IPPORT_RESERVED".into(),
+        ]
+        .into_iter()
+        .collect(),
+    );
     let mut skip_codegen = HEADER_GROUPS
         .iter()
         .map(|(x, _)| out_path.join(format!("bindings_{}.rs", x)))
@@ -366,6 +398,8 @@ fn build() {
                 codegen.header(path)
             });
         codegen
+            .parse_callbacks(Box::new(ignored_macros.clone()))
+            .rustfmt_bindings(true)
             .detect_include_paths(true)
             .generate_comments(true)
             .generate()
