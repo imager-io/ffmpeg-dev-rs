@@ -373,7 +373,6 @@ fn build() {
             .write_to_file(out_path.join(file_name))
             .expect("Couldn't write bindings!");
     };
-    assert!(source_path.join("libavfilter/version.h").exists());
     {
         for (name, hs) in HEADER_GROUPS {
             codegen(&format!("bindings_{}.rs", name), hs);
