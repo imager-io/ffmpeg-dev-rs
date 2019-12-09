@@ -252,6 +252,7 @@ fn build() {
             let result = std::process::Command::new("tar")
                 .arg("-xJf")
                 .arg("archive/FFmpeg-FFmpeg-2722fc2.tar.gz")
+                .arg("-C")
                 .arg(out_path.to_str().expect("PathBuf to str"))
                 .output()
                 .expect("tar decompression of ffmpeg source repo using xz (to fit the 10M crates limit)");
