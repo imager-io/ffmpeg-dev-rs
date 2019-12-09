@@ -43,6 +43,7 @@ libavutil/common.h
 libavutil/pixdesc.h
 libavutil/pixelutils.h
 libavutil/pixfmt.h
+libavutil/timestamp.h
 libavcodec/internal.h
 libavcodec/avcodec.h
 libavcodec/jpeg2000.h
