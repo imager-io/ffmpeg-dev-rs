@@ -247,7 +247,16 @@ fn build() {
     }
     // EXTRACT
     if !source_path.exists() || !skip_build {
-        extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
+        // extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
+        {
+            let result = std::process::Command::new("tar")
+                .arg("-xJf")
+                .arg("archive/FFmpeg-FFmpeg-2722fc2.tar.gz")
+                .arg(out_path.to_str().expect("PathBuf to str"))
+                .output()
+                .expect("tar decompression of ffmpeg source repo using xz (to fit the 10M crates limit)");
+            assert!(result.status.success());
+        }
         assert!(source_path.exists());  
     }
     // BUILD CODE PHASE
