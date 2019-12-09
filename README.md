@@ -7,7 +7,7 @@ and does not require a network connection for building.
 
 # NOTE
 
-For the current version (`2.0`), I’m currently having issues with `docs.rs`. Will publish the working, somewhat stable version on `0.3`.
+For the current version (`2.0`), I’m currently having issues with `docs.rs` (and maybe linux builds in general). Will publish the working, somewhat stable version on `0.3`.
 
 # Internal Behavior
 
