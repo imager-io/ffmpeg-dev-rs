@@ -11,9 +11,9 @@ pub mod avcodec {
 pub mod avdevice {
     include!(concat!(env!("OUT_DIR"), "/bindings_avdevice.rs"));
 }
-pub mod avfilter {
-    include!(concat!(env!("OUT_DIR"), "/bindings_avfilter.rs"));
-}
+// pub mod avfilter {
+//     include!(concat!(env!("OUT_DIR"), "/bindings_avfilter.rs"));
+// }
 pub mod avformat {
     include!(concat!(env!("OUT_DIR"), "/bindings_avformat.rs"));
 }

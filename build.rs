@@ -177,12 +177,15 @@ pub const HEADER_GROUPS: &[(&str, &[&str])] = &[
             "libavdevice/avdevice.h",
         ]
     ),
-    (
-        "avfilter",
-        &[
-            "libavfilter/avfilter.h",
-        ]
-    ),
+    // (
+    //     "avfilter",
+    //     &[
+    //         // // DEPS
+    //         // "libavfilter/version.h",
+    //         // EXTERNAL
+    //         // "libavfilter/avfilter.h",
+    //     ]
+    // ),
     (
         "avformat",
         &[
