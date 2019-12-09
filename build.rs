@@ -345,15 +345,8 @@ fn build() {
     // CODEGEN
     let codegen = |file_name: &str, headers: &[&str]| {
         let codegen = bindgen::Builder::default();
-        let codegen = headers
-            .iter()
-            .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
-                let path: &str = path.clone();
-                let path: PathBuf = source_path.join(path);
-                let path: &str = path.to_str().expect("PathBuf to str");
-                assert!(PathBuf::from(path).exists());
-                codegen.header(path)
-            });
+        let codegen = codegen
+            .header(source_path.join("libavfilter/version.h").to_str().expect("PathBuf to str"));
         let codegen = SEARCH_PATHS
             .iter()
             .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
@@ -363,6 +356,15 @@ fn build() {
                 assert!(PathBuf::from(path).exists());
                 codegen.clang_arg(format!("-I{}", path))
             });
+        let codegen = headers
+            .iter()
+            .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
+                let path: &str = path.clone();
+                let path: PathBuf = source_path.join(path);
+                let path: &str = path.to_str().expect("PathBuf to str");
+                assert!(PathBuf::from(path).exists());
+                codegen.header(path)
+            });
         codegen
             .detect_include_paths(true)
             .generate_comments(true)
@@ -371,6 +373,7 @@ fn build() {
             .write_to_file(out_path.join(file_name))
             .expect("Couldn't write bindings!");
     };
+    assert!(source_path.join("libavfilter/version.h").exists());
     {
         for (name, hs) in HEADER_GROUPS {
             codegen(&format!("bindings_{}.rs", name), hs);
