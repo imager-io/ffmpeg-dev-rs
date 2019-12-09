@@ -332,10 +332,13 @@ fn build() {
         println!("cargo:rustc-link-lib=static={}", name);
     }
     // CODEGEN SETUP
-    let skip_codegen = HEADER_GROUPS
+    let mut skip_codegen = HEADER_GROUPS
         .iter()
         .map(|(x, _)| out_path.join(format!("bindings_{}.rs", x)))
         .all(|x| x.exists());
+    if has_env_var_with_value("FFDEV2", "2") {
+        skip_codegen = false;
+    }
     // CODEGEN
     let codegen = |file_name: &str, headers: &[&str]| {
         let codegen = bindgen::Builder::default();
@@ -348,14 +351,24 @@ fn build() {
                 assert!(PathBuf::from(path).exists());
                 codegen.header(path)
             });
+        let codegen = SEARCH_PATHS
+            .iter()
+            .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
+                let path: &str = path.clone();
+                let path: PathBuf = source_path.join(path);
+                let path: &str = path.to_str().expect("PathBuf to str");
+                assert!(PathBuf::from(path).exists());
+                codegen.clang_arg(format!("-I{}", path))
+            });
         codegen
+            .detect_include_paths(true)
             .generate_comments(true)
             .generate()
             .expect("Unable to generate bindings")
             .write_to_file(out_path.join(file_name))
             .expect("Couldn't write bindings!");
     };
-    if !skip_codegen {
+    {
         for (name, hs) in HEADER_GROUPS {
             codegen(&format!("bindings_{}.rs", name), hs);
         }
@@ -367,5 +380,6 @@ fn build() {
 ///////////////////////////////////////////////////////////////////////////////
 
 fn main() {
+    
     build();
 }
