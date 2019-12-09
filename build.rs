@@ -285,7 +285,11 @@ fn build() {
                 ))
                 .output()
                 .expect(&format!("ffmpeg configure script"));
-            assert!(result.status.success());
+            if !result.status.success() {
+                let stderr = String::from_utf8(result.stderr).expect("invalid str");
+                let stdout = String::from_utf8(result.stdout).expect("invalid str");
+                panic!("configure failed:\n{}", vec![stderr, stdout].join("\n"));
+            }
         }
         // BUILD
         {
