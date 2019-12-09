@@ -345,8 +345,8 @@ fn build() {
     // CODEGEN
     let codegen = |file_name: &str, headers: &[&str]| {
         let codegen = bindgen::Builder::default();
-        let codegen = codegen
-            .header(source_path.join("libavfilter/version.h").to_str().expect("PathBuf to str"));
+        // let codegen = codegen
+        //     .header(source_path.join("libavfilter/version.h").to_str().expect("PathBuf to str"));
         let codegen = SEARCH_PATHS
             .iter()
             .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
