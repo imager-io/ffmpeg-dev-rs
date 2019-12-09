@@ -166,58 +166,71 @@ pub const STATIC_LIBS: &[(&str, &str)] = &[
     ),
 ];
 
-pub const HEADER_GROUPS: &[(&str, &[&str])] = &[
-    (
-        "avcodec",
-        &[
-            "libavcodec/avcodec.h",
-        ]
-    ),
-    (
-        "avdevice",
-        &[
-            "libavdevice/avdevice.h",
-        ]
-    ),
-    // (
-    //     "avfilter",
-    //     &[
-    //         // // DEPS
-    //         // "libavfilter/version.h",
-    //         // EXTERNAL
-    //         "libavfilter/avfilter.h",
-    //     ]
-    // ),
-    (
-        "avformat",
-        &[
-            "libavformat/avformat.h",
-        ]
-    ),
-    (
-        "avresample",
-        &[
-            "libavresample/avresample.h",
-        ]
-    ),
-    (
-        "avutil",
-        &[
-            "libavutil/avutil.h",
-        ]
-    ),
-    (
-        "swresample",
-        &[
-            "libswresample/swresample.h",
-        ]
-    ),
-    (
-        "swscale",
-        &[
-            "libswscale/swscale.h",
-        ]
-    ),
+// pub const HEADER_GROUPS: &[(&str, &[&str])] = &[
+//     (
+//         "avcodec",
+//         &[
+//             "libavcodec/avcodec.h",
+//         ]
+//     ),
+//     (
+//         "avdevice",
+//         &[
+//             "libavdevice/avdevice.h",
+//         ]
+//     ),
+//     // (
+//     //     "avfilter",
+//     //     &[
+//     //         // // DEPS
+//     //         // "libavfilter/version.h",
+//     //         // EXTERNAL
+//     //         "libavfilter/avfilter.h",
+//     //     ]
+//     // ),
+//     (
+//         "avformat",
+//         &[
+//             "libavformat/avformat.h",
+//         ]
+//     ),
+//     (
+//         "avresample",
+//         &[
+//             "libavresample/avresample.h",
+//         ]
+//     ),
+//     (
+//         "avutil",
+//         &[
+//             "libavutil/avutil.h",
+//         ]
+//     ),
+//     (
+//         "swresample",
+//         &[
+//             "libswresample/swresample.h",
+//         ]
+//     ),
+//     (
+//         "swscale",
+//         &[
+//             "libswscale/swscale.h",
+//         ]
+//     ),
+// ];
+
+pub const HEADERS: &[&str] = &[
+    // EXTRA
+    // "libavutil/log.h",
+    // CORE
+    "libavcodec/avcodec.h",
+    "libavdevice/avdevice.h",
+    "libavformat/avformat.h",
+    "libavresample/avresample.h",
+    "libavutil/avutil.h",
+    "libswresample/swresample.h",
+    "libswscale/swscale.h",
 ];
 
 pub const SEARCH_PATHS: &[&str] = &[
@@ -355,24 +368,23 @@ fn build() {
     for (name, _) in STATIC_LIBS {
         println!("cargo:rustc-link-lib=static={}", name);
     }
-    // CODEGEN SETUP
-    let ignored_macros = IgnoreMacros(HashSet::from_iter(vec![
-        String::from("FP_INFINITE"),
-        String::from("FP_NAN"),
-        String::from("FP_NORMAL"),
-        String::from("FP_SUBNORMAL"),
-        String::from("FP_ZERO"),
-        String::from("IPPORT_RESERVED"),
-    ]));
-    let mut skip_codegen = HEADER_GROUPS
-        .iter()
-        .map(|(x, _)| out_path.join(format!("bindings_{}.rs", x)))
-        .all(|x| x.exists());
-    if has_env_var_with_value("FFDEV2", "2") {
-        skip_codegen = false;
-    }
     // CODEGEN
-    let codegen = |file_name: &str, headers: &[&str]| {
+    {
+        // SETUP
+        let gen_file_name = "bindings_ffmpeg.rs";
+        let ignored_macros = IgnoreMacros(HashSet::from_iter(vec![
+            String::from("FP_INFINITE"),
+            String::from("FP_NAN"),
+            String::from("FP_NORMAL"),
+            String::from("FP_SUBNORMAL"),
+            String::from("FP_ZERO"),
+            String::from("IPPORT_RESERVED"),
+        ]));
+        let mut skip_codegen = out_path.join(gen_file_name).exists();
+        if has_env_var_with_value("FFDEV2", "2") {
+            skip_codegen = false;
+        }
+        // CONFIG
         let codegen = bindgen::Builder::default();
         // let codegen = codegen
         //     .header(source_path.join("libavfilter/version.h").to_str().expect("PathBuf to str"));
@@ -385,7 +397,7 @@ fn build() {
                 assert!(PathBuf::from(path).exists());
                 codegen.clang_arg(format!("-I{}", path))
             });
-        let codegen = headers
+        let codegen = HEADERS
             .iter()
             .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
                 let path: &str = path.clone();
@@ -394,6 +406,7 @@ fn build() {
                 assert!(PathBuf::from(path).exists());
                 codegen.header(path)
             });
+        // RUN
         codegen
             .parse_callbacks(Box::new(ignored_macros.clone()))
             .rustfmt_bindings(true)
@@ -401,13 +414,8 @@ fn build() {
             .generate_comments(true)
             .generate()
             .expect("Unable to generate bindings")
-            .write_to_file(out_path.join(file_name))
+            .write_to_file(out_path.join(gen_file_name))
             .expect("Couldn't write bindings!");
-    };
-    {
-        for (name, hs) in HEADER_GROUPS {
-            codegen(&format!("bindings_{}.rs", name), hs);
-        }
     }
 }
 
