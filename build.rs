@@ -23,6 +23,10 @@ fn is_debug_mode() -> bool {
     has_env_var_with_value("PROFILE", "debug")
 }
 
+fn opt_level_eq(x: u8) -> bool {
+    has_env_var_with_value("OPT_LEVEL", &format!("{}", x))
+}
+
 fn has_env_var_with_value(s: &str, v: &str) -> bool {
     std::env::var(s)
         .map(|x| x.to_lowercase())
@@ -160,8 +164,55 @@ pub const STATIC_LIBS: &[(&str, &str)] = &[
     ),
 ];
 
-pub const HEADERS: &[&str] = &[
-    "libavcodec/avcodec.h",
+pub const HEADER_GROUPS: &[(&str, &[&str])] = &[
+    (
+        "avcodec",
+        &[
+            "libavcodec/avcodec.h",
+        ]
+    ),
+    (
+        "avdevice",
+        &[
+            "libavdevice/avdevice.h",
+        ]
+    ),
+    (
+        "avfilter",
+        &[
+            "libavfilter/avfilter.h",
+        ]
+    ),
+    (
+        "avformat",
+        &[
+            "libavformat/avformat.h",
+        ]
+    ),
+    (
+        "avresample",
+        &[
+            "libavresample/avresample.h",
+        ]
+    ),
+    (
+        "avutil",
+        &[
+            "libavutil/avutil.h",
+        ]
+    ),
+    (
+        "swresample",
+        &[
+            "libswresample/swresample.h",
+        ]
+    ),
+    (
+        "swscale",
+        &[
+            "libswscale/swscale.h",
+        ]
+    ),
 ];
 
 pub const SEARCH_PATHS: &[&str] = &[
@@ -194,23 +245,26 @@ fn build() {
     if has_env_var_with_value("FFDEV1", "1") {
         skip_build = false;
     }
+    // EXTRACT
+    if !source_path.exists() || !skip_build {
+        extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
+        assert!(source_path.exists());  
+    }
     // BUILD CODE PHASE
     if skip_build == false {
-        // SETUP
-        extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
-        assert!(source_path.exists());
         // CONFIGURE
         {
-            let configure_flags = &[
+            let mut configure_flags = vec![
                 "--disable-programs",
                 "--disable-doc",
                 "--disable-autodetect",
-                // // APPLE
-                // "--disable-avfoundation",
-                // "--disable-appkit",
-                // "--disable-coreimage",
-                // "--disable-audiotoolbox",
             ];
+            // TRY TO SPEED THIS UP FOR DEV BUILDS
+            if is_debug_mode() && opt_level_eq(0) {
+                configure_flags.push("--disable-optimizations");
+                configure_flags.push("--disable-debug");
+                configure_flags.push("--disable-stripping");
+            }
             let configure_flags = configure_flags.join(" ");
             let result = std::process::Command::new("sh")
                 .arg("-c")
@@ -224,7 +278,18 @@ fn build() {
             assert!(result.status.success());
         }
         // BUILD
-        run_make(&source_path, "Makefile");
+        {
+            let mut cpu_number = num_cpus::get();
+            let result = std::process::Command::new("make")
+                .arg("-C")
+                .arg(&source_path)
+                .arg("-f")
+                .arg("Makefile")
+                .arg(&format!("-j{}", cpu_number))
+                .output()
+                .expect(&format!("make -C {:?} failed", source_path));
+            assert!(result.status.success());
+        }
     }
     // LINK
     for path in SEARCH_PATHS {
@@ -236,26 +301,27 @@ fn build() {
         println!("cargo:rustc-link-lib=static={}", name);
     }
     // CODEGEN
-    // let codegen = |file_name: &str, headers: &[&str]| {
-    //     let codegen = bindgen::Builder::default();
-    //     let codegen = codegen.header("include/prelude.h");
-    //     let codegen = headers
-    //         .iter()
-    //         .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
-    //             let path: &str = path.clone();
-    //             let path: PathBuf = source_path.join(path);
-    //             let path: &str = path.to_str().expect("PathBuf to str");
-    //             assert!(PathBuf::from(path).exists());
-    //             codegen.header(path)
-    //         });
-    //     codegen
-    //         .generate_comments(true)
-    //         .generate()
-    //         .expect("Unable to generate bindings")
-    //         .write_to_file(out_path.join(file_name))
-    //         .expect("Couldn't write bindings!");
-    // };
-    // codegen("bindings_x264.rs", HEADERS);
+    let codegen = |file_name: &str, headers: &[&str]| {
+        let codegen = bindgen::Builder::default();
+        let codegen = headers
+            .iter()
+            .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
+                let path: &str = path.clone();
+                let path: PathBuf = source_path.join(path);
+                let path: &str = path.to_str().expect("PathBuf to str");
+                assert!(PathBuf::from(path).exists());
+                codegen.header(path)
+            });
+        codegen
+            .generate_comments(true)
+            .generate()
+            .expect("Unable to generate bindings")
+            .write_to_file(out_path.join(file_name))
+            .expect("Couldn't write bindings!");
+    };
+    for (name, hs) in HEADER_GROUPS {
+        codegen(&format!("bindings_{}.rs", name), hs);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
