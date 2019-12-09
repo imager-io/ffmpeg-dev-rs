@@ -256,9 +256,6 @@ fn build() {
                 .arg(out_path.to_str().expect("PathBuf to str"))
                 .output()
                 .expect("tar decompression of ffmpeg source repo using xz (to fit the 10M crates limit)");
-            if !result.status.success() {
-                eprintln!(format!("{}", result.stderr));
-            }
             assert!(result.status.success());
         }
         assert!(source_path.exists());  
