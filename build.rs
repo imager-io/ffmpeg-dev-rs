@@ -171,51 +171,51 @@ pub const HEADER_GROUPS: &[(&str, &[&str])] = &[
             "libavcodec/avcodec.h",
         ]
     ),
-    (
-        "avdevice",
-        &[
-            "libavdevice/avdevice.h",
-        ]
-    ),
     // (
-    //     "avfilter",
+    //     "avdevice",
     //     &[
-    //         // // DEPS
-    //         // "libavfilter/version.h",
-    //         // EXTERNAL
-    //         // "libavfilter/avfilter.h",
+    //         "libavdevice/avdevice.h",
     //     ]
     // ),
-    (
-        "avformat",
-        &[
-            "libavformat/avformat.h",
-        ]
-    ),
-    (
-        "avresample",
-        &[
-            "libavresample/avresample.h",
-        ]
-    ),
-    (
-        "avutil",
-        &[
-            "libavutil/avutil.h",
-        ]
-    ),
-    (
-        "swresample",
-        &[
-            "libswresample/swresample.h",
-        ]
-    ),
-    (
-        "swscale",
-        &[
-            "libswscale/swscale.h",
-        ]
-    ),
+    // // (
+    // //     "avfilter",
+    // //     &[
+    // //         // // DEPS
+    // //         // "libavfilter/version.h",
+    // //         // EXTERNAL
+    // //         // "libavfilter/avfilter.h",
+    // //     ]
+    // // ),
+    // (
+    //     "avformat",
+    //     &[
+    //         "libavformat/avformat.h",
+    //     ]
+    // ),
+    // (
+    //     "avresample",
+    //     &[
+    //         "libavresample/avresample.h",
+    //     ]
+    // ),
+    // (
+    //     "avutil",
+    //     &[
+    //         "libavutil/avutil.h",
+    //     ]
+    // ),
+    // (
+    //     "swresample",
+    //     &[
+    //         "libswresample/swresample.h",
+    //     ]
+    // ),
+    // (
+    //     "swscale",
+    //     &[
+    //         "libswscale/swscale.h",
+    //     ]
+    // ),
 ];
 
 pub const SEARCH_PATHS: &[&str] = &[
