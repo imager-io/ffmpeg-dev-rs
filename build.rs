@@ -247,7 +247,6 @@ fn build() {
     }
     // EXTRACT
     if !source_path.exists() || !skip_build {
-        // extract_tar_file("archive/FFmpeg-FFmpeg-2722fc2.tar.gz", &out_path);
         {
             let result = std::process::Command::new("tar")
                 .arg("-xJf")
@@ -293,6 +292,7 @@ fn build() {
                 let stdout = String::from_utf8(result.stdout).expect("invalid str");
                 let nasm_yasm_issue = stderr
                     .lines()
+                    .chain(stdout.lines())
                     .any(|x| x.contains("nasm/yasm not found or too old"));
                 // MAYBE RETRY (USE CRIPPLED BUILD)
                 if nasm_yasm_issue {
@@ -334,8 +334,7 @@ fn build() {
     // CODEGEN SETUP
     let skip_codegen = HEADER_GROUPS
         .iter()
-        .map(|(x, _)| format!("bindings_{}.rs", x))
-        .map(|x| out_path.join(x))
+        .map(|(x, _)| out_path.join(format!("bindings_{}.rs", x)))
         .all(|x| x.exists());
     // CODEGEN
     let codegen = |file_name: &str, headers: &[&str]| {
@@ -359,7 +358,7 @@ fn build() {
     if !skip_codegen {
         for (name, hs) in HEADER_GROUPS {
             codegen(&format!("bindings_{}.rs", name), hs);
-        }   
+        }
     }
 }
 
