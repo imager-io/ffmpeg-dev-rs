@@ -11,7 +11,7 @@ For the current version (`2.0`), I’m currently having issues with `docs.rs` (a
 
 # Internal Behavior
 
-By default the debug or dev builds compile FFmpeg without optimizations, this is for the purpose of speeding up compilation. Compiling on release mode or settings `opt-level` > 1 will disable this behavior.
+By default the debug or dev builds compile FFmpeg without optimizations, this is for the purpose of speeding up compilation. Compiling on release mode or setting `opt-level` > 1 will disable this behavior.
 
 # LICENSE WARNING
 > I’m not a lawyer, furthermore I really don’t understand software licenses.
