@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use std::iter::FromIterator;
 use std::collections::HashSet;
 use std::convert::AsRef;
 use std::path::{PathBuf, Path};
@@ -172,51 +173,51 @@ pub const HEADER_GROUPS: &[(&str, &[&str])] = &[
             "libavcodec/avcodec.h",
         ]
     ),
-    // (
-    //     "avdevice",
-    //     &[
-    //         "libavdevice/avdevice.h",
-    //     ]
-    // ),
-    // // (
-    // //     "avfilter",
-    // //     &[
-    // //         // // DEPS
-    // //         // "libavfilter/version.h",
-    // //         // EXTERNAL
-    // //         // "libavfilter/avfilter.h",
-    // //     ]
-    // // ),
-    // (
-    //     "avformat",
-    //     &[
-    //         "libavformat/avformat.h",
-    //     ]
-    // ),
-    // (
-    //     "avresample",
-    //     &[
-    //         "libavresample/avresample.h",
-    //     ]
-    // ),
-    // (
-    //     "avutil",
-    //     &[
-    //         "libavutil/avutil.h",
-    //     ]
-    // ),
-    // (
-    //     "swresample",
-    //     &[
-    //         "libswresample/swresample.h",
-    //     ]
-    // ),
-    // (
-    //     "swscale",
-    //     &[
-    //         "libswscale/swscale.h",
-    //     ]
-    // ),
+    (
+        "avdevice",
+        &[
+            "libavdevice/avdevice.h",
+        ]
+    ),
+    (
+        "avfilter",
+        &[
+            // // DEPS
+            // "libavfilter/version.h",
+            // EXTERNAL
+            "libavfilter/avfilter.h",
+        ]
+    ),
+    (
+        "avformat",
+        &[
+            "libavformat/avformat.h",
+        ]
+    ),
+    (
+        "avresample",
+        &[
+            "libavresample/avresample.h",
+        ]
+    ),
+    (
+        "avutil",
+        &[
+            "libavutil/avutil.h",
+        ]
+    ),
+    (
+        "swresample",
+        &[
+            "libswresample/swresample.h",
+        ]
+    ),
+    (
+        "swscale",
+        &[
+            "libswscale/swscale.h",
+        ]
+    ),
 ];
 
 pub const SEARCH_PATHS: &[&str] = &[
@@ -355,18 +356,14 @@ fn build() {
         println!("cargo:rustc-link-lib=static={}", name);
     }
     // CODEGEN SETUP
-    let ignored_macros = IgnoreMacros(
-        vec![
-            "FP_INFINITE".into(),
-            "FP_NAN".into(),
-            "FP_NORMAL".into(),
-            "FP_SUBNORMAL".into(),
-            "FP_ZERO".into(),
-            "IPPORT_RESERVED".into(),
-        ]
-        .into_iter()
-        .collect(),
-    );
+    let ignored_macros = IgnoreMacros(HashSet::from_iter(vec![
+        String::from("FP_INFINITE"),
+        String::from("FP_NAN"),
+        String::from("FP_NORMAL"),
+        String::from("FP_SUBNORMAL"),
+        String::from("FP_ZERO"),
+        String::from("IPPORT_RESERVED"),
+    ]));
     let mut skip_codegen = HEADER_GROUPS
         .iter()
         .map(|(x, _)| out_path.join(format!("bindings_{}.rs", x)))
