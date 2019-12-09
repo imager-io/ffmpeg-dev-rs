@@ -23,3 +23,7 @@ Hopefully one day the rust ecosystem will get a decent FFmpeg alternative for e.
 
 # Future
 It would be interesting to experiment with compiling FFmpeg to WebAssembly. Perhaps as an alternative to static linking, if a local version isn’t available it could link to a remote lib over the network.
+
+<hr/>
+
+Built for [Imager](https://imager.io) - Site performance tools for efficiently distributing media on the web.
