@@ -275,20 +275,37 @@ fn build() {
                 configure_flags.push("--disable-debug");
                 configure_flags.push("--disable-stripping");
             }
-            let configure_flags = configure_flags.join(" ");
-            let result = std::process::Command::new("sh")
-                .arg("-c")
-                .arg(&format!(
-                    "cd {path} && ./configure {flags}",
-                    path=source_path.to_str().expect("PathBuf to str"),
-                    flags=configure_flags,
-                ))
-                .output()
-                .expect(&format!("ffmpeg configure script"));
+            let eval_configure = |flags: Vec<&str>| {
+                let flags = flags.join(" ");
+                std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg(&format!(
+                        "cd {path} && ./configure {flags}",
+                        path=source_path.to_str().expect("PathBuf to str"),
+                        flags=flags,
+                    ))
+                    .output()
+                    .expect(&format!("ffmpeg configure script"))
+            };
+            let result = eval_configure(configure_flags.clone());
             if !result.status.success() {
                 let stderr = String::from_utf8(result.stderr).expect("invalid str");
                 let stdout = String::from_utf8(result.stdout).expect("invalid str");
-                panic!("configure failed:\n{}", vec![stderr, stdout].join("\n"));
+                let nasm_yasm_issue = stderr
+                    .lines()
+                    .any(|x| x.contains("nasm/yasm not found or too old"));
+                // MAYBE RETRY (USE CRIPPLED BUILD)
+                if nasm_yasm_issue {
+                    configure_flags.push("--disable-x86asm");
+                    let result = eval_configure(configure_flags);
+                    let stderr = String::from_utf8(result.stderr).expect("invalid str");
+                    let stdout = String::from_utf8(result.stdout).expect("invalid str");
+                    if !result.status.success() {
+                        panic!("configure failed:\n{}", vec![stderr, stdout].join("\n"));
+                    }
+                } else {
+                    panic!("configure failed:\n{}", vec![stderr, stdout].join("\n"));
+                }
             }
         }
         // BUILD
@@ -314,6 +331,12 @@ fn build() {
     for (name, _) in STATIC_LIBS {
         println!("cargo:rustc-link-lib=static={}", name);
     }
+    // CODEGEN SETUP
+    let skip_codegen = HEADER_GROUPS
+        .iter()
+        .map(|(x, _)| format!("bindings_{}.rs", x))
+        .map(|x| out_path.join(x))
+        .all(|x| x.exists());
     // CODEGEN
     let codegen = |file_name: &str, headers: &[&str]| {
         let codegen = bindgen::Builder::default();
@@ -333,8 +356,10 @@ fn build() {
             .write_to_file(out_path.join(file_name))
             .expect("Couldn't write bindings!");
     };
-    for (name, hs) in HEADER_GROUPS {
-        codegen(&format!("bindings_{}.rs", name), hs);
+    if !skip_codegen {
+        for (name, hs) in HEADER_GROUPS {
+            codegen(&format!("bindings_{}.rs", name), hs);
+        }   
     }
 }
 
