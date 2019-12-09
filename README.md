@@ -5,9 +5,6 @@ and does not require a network connection for building.
 
 **The FFmpeg bindings now include doc comments, including struct fields!** See [here](https://docs.rs/ffmpeg-dev/0.2.2/ffmpeg_dev/sys/avcodec/struct.AVCodec.html).
 
-# Stability
-API bindings should be **practically** stable now.
-
 # Internal Behavior
 
 By default the debug or dev builds compile FFmpeg without optimizations, this is for the purpose of speeding up compilation. Compiling on release mode or setting `opt-level` > 1 will disable this behavior.
