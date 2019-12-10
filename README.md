@@ -1,7 +1,23 @@
-Self contained FFmpeg (sys) bindings.
+Direct, unobscured and self contained FFmpeg (sys) bindings.
 
-Does not require or link against any FFmpeg system dependencies,
-and does not require a network connection for building.
+```rust
+let ifmt_ctx: AVFormatContext = *ifmt_ctx;
+
+// Extract video/audio/etc. streams from an e.g. MP4 file
+let streams: &[AVStream] = std::slice::from_raw_parts(
+    *ifmt_ctx.streams, 
+    ifmt_ctx.nb_streams as usize
+);
+
+// C bindings require zero for` loops 😌 - instead turn C dynamic arrays into Rust array refs
+for stream in std::slice::from_raw_parts(*ifmt_ctx.streams, ifmt_ctx.nb_streams as usize) {
+    /// ... stream is of type '&AVStream'
+}
+```
+
+By self contained I mean:
+* Does not require or link against any FFmpeg system dependencies.
+* Does not require a network connection for building.
 
 **The FFmpeg bindings now include doc comments, including struct fields!** See [here](https://docs.rs/ffmpeg-dev/0.2.2/ffmpeg_dev/sys/avcodec/struct.AVCodec.html).
 
