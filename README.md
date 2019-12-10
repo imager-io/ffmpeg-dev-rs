@@ -1,9 +1,31 @@
 Direct, unobscured and self contained FFmpeg (sys) bindings.
 
 ```rust
+let input_path_cstr = std::ffi::CString::new("path/to/source.mp4").unwrap("to c str");
+
+// Open an e.g. MP4 file
+avformat_open_input(
+    &mut ifmt_ctx,
+    input_path_cstr.as_ptr(),
+    std::ptr::null_mut(),
+    std::ptr::null_mut(),
+);
+avformat_find_stream_info(ifmt_ctx, std::ptr::null_mut());
+
+// Print info about the loaded file
+av_dump_format(
+    ifmt_ctx,
+    0,
+    input_path_cstr.as_ptr(),
+    0,
+);
+```
+
+
+```rust
 let ifmt_ctx: AVFormatContext = *ifmt_ctx;
 
-// Extract video/audio/etc. streams from an e.g. MP4 file
+// Extract video/audio/etc. streams from our mp4 file
 let streams: &[AVStream] = std::slice::from_raw_parts(
     *ifmt_ctx.streams, 
     ifmt_ctx.nb_streams as usize
