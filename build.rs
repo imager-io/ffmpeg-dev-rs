@@ -332,36 +332,68 @@ fn build() {
             skip_codegen = false;
         }
         // CONFIG
-        let codegen = bindgen::Builder::default();
-        let codegen = codegen.clang_arg(format!("-I{}", source_path.to_str().expect("PathBuf to str")));
-        let mut missing = Vec::new();
-        let codegen = ffmpeg_headers
-            .iter()
-            .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
-                let path: &str = path.clone();
-                let path: PathBuf = source_path.join(path);
-                let path: &str = path.to_str().expect("PathBuf to str");
-                if !PathBuf::from(path).exists() {
-                    missing.push(String::from(path));
-                    codegen
-                } else {
-                    codegen.header(path)
-                }
-            });
-        if !missing.is_empty() {
-            panic!("missing headers: {:#?}", missing);
+        if !skip_codegen {
+            let codegen = bindgen::Builder::default();
+            let codegen = codegen.clang_arg(format!("-I{}", source_path.to_str().expect("PathBuf to str")));
+            let mut missing = Vec::new();
+            let codegen = ffmpeg_headers
+                .iter()
+                .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
+                    let path: &str = path.clone();
+                    let path: PathBuf = source_path.join(path);
+                    let path: &str = path.to_str().expect("PathBuf to str");
+                    if !PathBuf::from(path).exists() {
+                        missing.push(String::from(path));
+                        codegen
+                    } else {
+                        codegen.header(path)
+                    }
+                });
+            if !missing.is_empty() {
+                panic!("missing headers: {:#?}", missing);
+            }
+            // RUN
+            codegen
+                .parse_callbacks(Box::new(ignored_macros.clone()))
+                .layout_tests(false)
+                .rustfmt_bindings(true)
+                .detect_include_paths(true)
+                .generate_comments(true)
+                .generate()
+                .expect("Unable to generate bindings")
+                .write_to_file(out_path.join(gen_file_name))
+                .expect("Couldn't write bindings!");
         }
-        // RUN
-        codegen
-            .parse_callbacks(Box::new(ignored_macros.clone()))
-            .rustfmt_bindings(true)
-            .detect_include_paths(true)
-            .generate_comments(true)
-            .generate()
-            .expect("Unable to generate bindings")
-            .write_to_file(out_path.join(gen_file_name))
-            .expect("Couldn't write bindings!");
     }
+    // DEV - TMP
+    // {
+    //     let codegen = |file_name: &str, headers: &[&str]| {
+    //         let codegen = bindgen::Builder::default();
+    //         let codegen = headers
+    //             .iter()
+    //             .fold(codegen, |codegen: bindgen::Builder, path: &&str| -> bindgen::Builder {
+    //                 let path: &str = path.clone();
+    //                 let path: PathBuf = source_path.join(path);
+    //                 let path: &str = path.to_str().expect("PathBuf to str");
+    //                 assert!(PathBuf::from(path).exists());
+    //                 codegen.header(path)
+    //             });
+    //         codegen
+    //             .layout_tests(false)
+    //             .generate_comments(true)
+    //             .generate()
+    //             .expect("Unable to generate bindings")
+    //             .write_to_file(out_path.join(file_name))
+    //             .expect("Couldn't write bindings!");
+    //     };
+    //     codegen("bindings_avcodec.rs", &["libavcodec/avcodec.h"]);
+    //     codegen("bindings_avdevice.rs", &["libavdevice/avdevice.h"]);
+    //     codegen("bindings_avfilter.rs", &["libavfilter/avfilter.h"]);
+    //     codegen("bindings_avformat.rs", &["libavformat/avformat.h"]);
+    //     codegen("bindings_avresample.rs", &["libavresample/avresample.h"]);
+    //     codegen("bindings_avutil.rs", &["libavutil/avutil.h"]);
+    //     codegen("bindings_swresample.rs", &["libswresample/swresample.h"]);
+    // }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
