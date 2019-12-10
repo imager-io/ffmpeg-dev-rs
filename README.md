@@ -1,4 +1,13 @@
+# About
 Direct, unobscured and self contained FFmpeg (sys) bindings.
+
+By self contained I mean:
+* Does not require or link against any FFmpeg system dependencies.
+* Does not require a network connection for building.
+
+**The FFmpeg bindings now include doc comments, including struct fields!** See [here](https://docs.rs/ffmpeg-dev/0.2.2/ffmpeg_dev/sys/avcodec/struct.AVCodec.html).
+
+## Example
 
 ```rust
 let input_path_cstr = std::ffi::CString::new("path/to/source.mp4").unwrap("to c str");
@@ -21,7 +30,7 @@ av_dump_format(
 );
 ```
 
-
+For the uninitiated, the std includes lots of convenient ffi related utilities. E.g. using `std::slice::from_raw_parts`:
 ```rust
 let ifmt_ctx: AVFormatContext = *ifmt_ctx;
 
@@ -37,16 +46,10 @@ for stream in std::slice::from_raw_parts(*ifmt_ctx.streams, ifmt_ctx.nb_streams 
 }
 ```
 
-By self contained I mean:
-* Does not require or link against any FFmpeg system dependencies.
-* Does not require a network connection for building.
-
-**The FFmpeg bindings now include doc comments, including struct fields!** See [here](https://docs.rs/ffmpeg-dev/0.2.2/ffmpeg_dev/sys/avcodec/struct.AVCodec.html).
-
-# Stability
+## Stability
 API bindings should be **practically** stable now.
 
-# Internal Behavior
+## Internal Behavior
 
 By default the debug or dev builds compile FFmpeg without optimizations, this is for the purpose of speeding up compilation. Compiling on release mode or setting `opt-level` > 1 will disable this behavior.
 
