@@ -41,7 +41,6 @@ let streams = std::slice::from_raw_parts((*ifmt_ctx).streams, nb_streams)
     .map(|x| (*x).as_ref().expect("not null"))
     .collect::<Vec<&AVStream>>();
 
-// Nice not using the old `for (initialization; condition test; increment or decrement)` syntax 😌.
 for (index, stream_ptr) in streams.iter().enumerate() {
     let codecpar = *stream_ptr.codecpar;
     if codecpar.codec_type == AVMEDIA_TYPE_AUDIO {
