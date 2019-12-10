@@ -32,6 +32,10 @@ av_dump_format(
 
 For the uninitiated, the std includes lots of convenient ffi related utilities. E.g. using `std::slice::from_raw_parts`:
 ```rust
+use ffmpeg_dev::sys::{
+    AVMediaType_AVMEDIA_TYPE_VIDEO as AVMEDIA_TYPE_VIDEO,
+    AVMediaType_AVMEDIA_TYPE_AUDIO as AVMEDIA_TYPE_AUDIO,
+};
 let ifmt_ctx: AVFormatContext = *ifmt_ctx;
 let nb_streams = (*ifmt_ctx).nb_streams as usize;
 
