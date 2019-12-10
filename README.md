@@ -10,7 +10,7 @@ By self contained I mean:
 ## Example
 
 ```rust
-let input_path_cstr = std::ffi::CString::new("path/to/source.mp4").unwrap("to c str");
+let input_path_cstr = std::ffi::CString::new("path/to/source.mp4").unwrap();
 
 // Open an e.g. MP4 file
 avformat_open_input(
