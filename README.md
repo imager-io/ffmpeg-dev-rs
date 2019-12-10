@@ -33,16 +33,17 @@ av_dump_format(
 For the uninitiated, the std includes lots of convenient ffi related utilities. E.g. using `std::slice::from_raw_parts`:
 ```rust
 let ifmt_ctx: AVFormatContext = *ifmt_ctx;
+let nb_streams = (*ifmt_ctx).nb_streams as usize;
 
 // Extract video/audio/etc. streams from our mp4 file
-let streams: &[AVStream] = std::slice::from_raw_parts(
-    *ifmt_ctx.streams, 
-    ifmt_ctx.nb_streams as usize
-);
+let streams: Vec<AVStream> = std::slice::from_raw_parts((*ifmt_ctx).streams, nb_streams)
+    .iter()
+    .map(|x| *(*x))
+    .collect::<Vec<AVStream>>();
 
 // C bindings require zero for loops 😌 - instead turn C dynamic arrays into Rust array refs
-for stream in std::slice::from_raw_parts(*ifmt_ctx.streams, ifmt_ctx.nb_streams as usize) {
-    /// ... stream is of type '&AVStream'
+for stream_ptr in std::slice::from_raw_parts((*ifmt_ctx).streams, nb_streams) {
+    // ...
 }
 ```
 
