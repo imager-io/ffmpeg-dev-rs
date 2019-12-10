@@ -35,15 +35,20 @@ For the uninitiated, the std includes lots of convenient ffi related utilities. 
 let ifmt_ctx: AVFormatContext = *ifmt_ctx;
 let nb_streams = (*ifmt_ctx).nb_streams as usize;
 
-// Extract video/audio/etc. streams from our mp4 file
-let streams: Vec<AVStream> = std::slice::from_raw_parts((*ifmt_ctx).streams, nb_streams)
+// Extract video/audio/etc. streams from our mp4 file.
+let streams = std::slice::from_raw_parts((*ifmt_ctx).streams, nb_streams)
     .iter()
-    .map(|x| *(*x))
-    .collect::<Vec<AVStream>>();
+    .map(|x| (*x).as_ref().expect("not null"))
+    .collect::<Vec<&AVStream>>();
 
-// C bindings require zero for loops 😌 - instead turn C dynamic arrays into Rust array refs
-for stream_ptr in std::slice::from_raw_parts((*ifmt_ctx).streams, nb_streams) {
-    // ...
+// C bindings require zero for loops 😌.
+for (index, stream_ptr) in streams.iter().enumerate() {
+    let codecpar = *stream_ptr.codecpar;
+    if codecpar.codec_type == AVMEDIA_TYPE_AUDIO {
+        println!("found audio stream at index {}", index);
+    } else if codecpar.codec_type == AVMEDIA_TYPE_VIDEO {
+        println!("found video stream at index {}", index);
+    }
 }
 ```
 
