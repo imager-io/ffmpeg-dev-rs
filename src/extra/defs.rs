@@ -6,11 +6,11 @@ use libc::{size_t, c_float};
 #[link(name = "cbits")]
 extern "C" {
     #[link_name = "SYS_EAGAIN"]
-    pub fn sys_eagain() -> i32;
+    pub fn eagain() -> i32;
     #[link_name = "SYS_AVERROR"]
-    pub fn sys_sys_averror(code: i32) -> i32;
+    pub fn averror(code: i32) -> i32;
     #[link_name = "SYS_AV_NOPTS_VALUE"]
-    pub fn sys_av_nopts_value() -> i64;
+    pub fn av_nopts_value() -> i64;
     #[link_name = "SYS_AV_ERROR_MAX_STRING_SIZE"]
     pub fn av_error_max_string_size() -> c_int;
     #[link_name = "SYS_AVERROR_BSF_NOT_FOUND"]
