@@ -370,7 +370,8 @@ fn build() {
         .include({
             source_path.to_str().expect("PathBuf to str")
         })
-        .file("cbits.c")
+        .file("cbits/defs.c")
+        .file("cbits/img_utils.c")
         .compile("cbits");
 }
 
