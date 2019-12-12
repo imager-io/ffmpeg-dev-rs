@@ -73,6 +73,28 @@ Hopefully one day the rust ecosystem will get a decent FFmpeg alternative for e.
 # Future
 It would be interesting to experiment with compiling FFmpeg to WebAssembly. Perhaps as an alternative to static linking, if a local version isn’t available it could link to a remote lib over the network.
 
+# Examples
+
+```shell
+$ cargo run --example h264_video_dec
+```
+
+## Added as of this writing
+* `./examples/remux.rs`
+* `./examples/h264_video_dec.rs`
+
+
+# Miscellaneous Links:
+* [FFmpeg docs overview](https://ffmpeg.org/documentation.html)
+* [FFmpeg C API documentation](https://ffmpeg.org/doxygen/trunk/index.html)
+* [FFmpeg C Examples](https://github.com/FFmpeg/FFmpeg/tree/master/doc/examples) (pretty easy to convert to rust in my experience)
+* [Rust docs](https://docs.rs/ffmpeg-dev)
+
+## Sample or Test Content
+
+* [sintel_trailer-1080p.mp4](https://download.blender.org/durian/trailer/sintel_trailer-1080p.mp4)
+* `./assets/test/test.h264` - heavily compressed version of the video stream from `sintel_trailer-1080p.mp4`. This is a raw H264 encoded video binary.
+
 <hr/>
 
 Built for [Imager](https://imager.io) - Site performance tools for efficiently distributing media on the web.

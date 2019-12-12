@@ -1,6 +1,6 @@
 [package]
 name = "ffmpeg-dev"
-version = "0.3.6"
+version = "0.3.7"
 authors = ["colbyn <hello@colbyn.com>"]
 edition = "2018"
 keywords = ["video", "ffmpeg"]
@@ -9,6 +9,7 @@ license = "MIT"
 homepage = "https://github.com/imager-io/ffmpeg-dev-rs"
 repository = "https://github.com/imager-io/ffmpeg-dev-rs"
 readme = "README.md"
+exclude = ["./assets"]
 
 [dependencies]
 libc = "^0.2"
