@@ -63,3 +63,6 @@ int SYS_AVERROR_PROTOCOL_NOT_FOUND() {
 int SYS_AVERROR_STREAM_NOT_FOUND() {
     return AVERROR_STREAM_NOT_FOUND;
 }
+size_t SYS_FFMIN(size_t a, size_t b) {
+    return FFMIN(a, b);
+}
