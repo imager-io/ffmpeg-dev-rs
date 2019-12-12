@@ -46,5 +46,11 @@ extern "C" {
     #[link_name = "SYS_AVERROR_STREAM_NOT_FOUND"]
     pub fn averror_stream_not_found() -> c_int;
     #[link_name = "SYS_FFMIN"]
+    #[deprecated(
+        since = "0.3.6",
+        note = "Please use the ffmin function instead, sys_ffmin was a mistake."
+    )]
     pub fn sys_ffmin(a: usize, b: usize) -> usize;
+    #[link_name = "SYS_FFMIN"]
+    pub fn ffmin(a: usize, b: usize) -> usize;
 }
