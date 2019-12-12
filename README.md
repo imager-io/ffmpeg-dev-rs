@@ -83,6 +83,11 @@ $ cargo run --example h264_video_dec
 * `./examples/remux.rs`
 * `./examples/h264_video_dec.rs`
 
+# Miscellaneous
+
+## RLS - Editor/IDE Issues
+
+For some reason (as of this writing) RLS has issues with multiple versions of `ffmpeg-dev` downloaded (under `target`). If there’s something I can fix on my side I’m happy to implement such changes. For now I’m just resorting my deleting the cache folder whenever I update `ffmpeg-dev`.
 
 # Miscellaneous Links:
 * [FFmpeg docs overview](https://ffmpeg.org/documentation.html)
