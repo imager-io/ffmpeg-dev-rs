@@ -9,7 +9,7 @@ license = "MIT"
 homepage = "https://github.com/imager-io/ffmpeg-dev-rs"
 repository = "https://github.com/imager-io/ffmpeg-dev-rs"
 readme = "README.md"
-exclude = ["./assets"]
+exclude = ["assets", "examples"]
 
 [dependencies]
 libc = "^0.2"
