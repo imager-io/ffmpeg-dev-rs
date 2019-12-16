@@ -289,7 +289,17 @@ fn build() {
                 .arg(&format!("-j{}", cpu_number))
                 .output()
                 .expect(&format!("make -C {:?} failed", source_path));
-            assert!(result.status.success());
+            if !result.status.success() {
+                let stderr = format!(
+                    "* stderr:\n{}",
+                    String::from_utf8(result.stderr).expect("invalid utf8 str from make stderr")
+                );
+                let stdout = format!(
+                    "* stdout:\n{}",
+                    String::from_utf8(result.stdout).expect("invalid utf8 str from make stdout")
+                );
+                panic!("make failed:\n{}", vec![stderr, stdout].join("\n\n"));
+            }
         }
     }
     // LINK
