@@ -1,3 +1,12 @@
+# WARNING
+
+Not recommend for beginners. This library isn’t safe nor idiomatic rust, a consequence offering direct bindings to the FFmpeg C APIs. 
+
+Furthermore:
+
+* this library will complicate compilation
+* this library will only be convenient for experienced Rust and C devs
+
 # About
 Direct, unobscured and self contained FFmpeg (sys) bindings.
 
