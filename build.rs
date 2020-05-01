@@ -5,6 +5,7 @@ use std::collections::HashSet;
 use std::convert::AsRef;
 use std::path::{PathBuf, Path};
 use std::string::ToString;
+use std::process::Command;
 use tar::Archive;
 use flate2::read::GzDecoder;
 
@@ -244,19 +245,15 @@ fn build() {
                 configure_flags.push("--disable-debug");
                 configure_flags.push("--disable-stripping");
             }
-            let eval_configure = |flags: Vec<&str>| {
-                let flags = flags.join(" ");
-                std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg(&format!(
-                        "cd {path} && ./configure {flags}",
-                        path=source_path.to_str().expect("PathBuf to str"),
-                        flags=flags,
-                    ))
+
+            let eval_configure = |flags: &[&str]| {
+                Command::new("./configure")
+                    .current_dir(&source_path)
+                    .args(flags)
                     .output()
-                    .expect(&format!("ffmpeg configure script"))
+                    .expect("ffmpeg configure script")
             };
-            let result = eval_configure(configure_flags.clone());
+            let result = eval_configure(&configure_flags);
             if !result.status.success() {
                 let stderr = String::from_utf8(result.stderr).expect("invalid str");
                 let stdout = String::from_utf8(result.stdout).expect("invalid str");
@@ -267,7 +264,7 @@ fn build() {
                 // MAYBE RETRY (USE CRIPPLED BUILD)
                 if nasm_yasm_issue {
                     configure_flags.push("--disable-x86asm");
-                    let result = eval_configure(configure_flags);
+                    let result = eval_configure(&configure_flags);
                     if !result.status.success() {
                         let stderr = String::from_utf8(result.stderr).expect("invalid str");
                         let stdout = String::from_utf8(result.stdout).expect("invalid str");
