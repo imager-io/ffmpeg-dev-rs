@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use std::env;
 use std::iter::FromIterator;
 use std::collections::HashSet;
 use std::convert::AsRef;
@@ -239,15 +240,46 @@ fn build() {
                 "--disable-doc",
                 "--disable-autodetect",
             ];
+
+            let mut pkg_config_path = env::var_os("PKG_CONFIG_PATH");
+
+            if env::var_os("CARGO_FEATURE_GPL").is_some() {
+                configure_flags.push("--enable-gpl");
+            }
+
+            if env::var_os("CARGO_FEATURE_X264").is_some() {
+                configure_flags.push("--enable-libx264");
+
+                let x264_libs = env::var_os("DEP_X264_LIBS").unwrap();
+                println!("cargo:rustc-link-search=native={}", x264_libs.to_str().expect("PathBuf to str"));
+                println!("cargo:rustc-link-lib=static=x264");
+
+                let mut x264_pkg_config = env::var_os("DEP_X264_PKGCONFIG").unwrap();
+
+                // append existing pkg_config path - make sure x264's pkgconfig has precedence:
+                if let Some(path) = pkg_config_path {
+                    x264_pkg_config.push(":");
+                    x264_pkg_config.push(path);
+                }
+
+                pkg_config_path = Some(x264_pkg_config);
+            }
+
             // TRY TO SPEED THIS UP FOR DEV BUILDS
             if is_debug_mode() && opt_level_eq(0) {
                 configure_flags.push("--disable-optimizations");
-                configure_flags.push("--disable-debug");
+                configure_flags.push("--enable-debug");
                 configure_flags.push("--disable-stripping");
             }
 
             let eval_configure = |flags: &[&str]| {
-                Command::new("./configure")
+                let mut configure = Command::new("./configure");
+
+                if let Some(path) = &pkg_config_path {
+                    configure.env("PKG_CONFIG_PATH", path);
+                }
+
+                configure
                     .current_dir(&source_path)
                     .args(flags)
                     .output()
