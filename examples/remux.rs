@@ -116,8 +116,16 @@ unsafe fn remux(
         );
         assert!(status >= 0);
     }
-    // WITE OUTPUT
-    assert!(sys::avformat_write_header(ofmt_ctx, std::ptr::null_mut()) >= 0);
+
+    // WRITE OUTPUT
+    let mut opts: *mut ffmpeg::AVDictionary = ptr::null_mut();
+    ffmpeg::av_dict_set(
+        &mut opts,
+        CString::new("movflags")?.as_ptr(),
+        CString::new("frag_keyframe+empty_moov+default_base_moof")?.as_ptr(),
+        0,
+    );
+    assert!(sys::avformat_write_header(ofmt_ctx,  &mut opts) >= 0);
     let mut status = 0;
     loop {
         if sys::av_read_frame(ifmt_ctx, &mut pkt) != 0 {
