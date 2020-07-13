@@ -121,8 +121,8 @@ unsafe fn remux(
     let mut opts: *mut ffmpeg_dev::sys::AVDictionary = std::ptr::null_mut();
     ffmpeg_dev::sys::av_dict_set(
         &mut opts,
-        CString::new("movflags").expect("valid c str").as_ptr(),
-        CString::new("frag_keyframe+empty_moov+default_base_moof").expect("valid c str").as_ptr(),
+        c_str("movflags").as_ptr(),
+        c_str("frag_keyframe+empty_moov+default_base_moof").as_ptr(),
         0,
     );
     assert!(sys::avformat_write_header(ofmt_ctx,  &mut opts) >= 0);
