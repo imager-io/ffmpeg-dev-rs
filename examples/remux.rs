@@ -118,11 +118,11 @@ unsafe fn remux(
     }
 
     // WRITE OUTPUT
-    let mut opts: *mut ffmpeg::AVDictionary = ptr::null_mut();
-    ffmpeg::av_dict_set(
+    let mut opts: *mut ffmpeg_dev::sys::AVDictionary = std::ptr::null_mut();
+    ffmpeg_dev::sys::av_dict_set(
         &mut opts,
-        CString::new("movflags")?.as_ptr(),
-        CString::new("frag_keyframe+empty_moov+default_base_moof")?.as_ptr(),
+        CString::new("movflags").expect("valid c str").as_ptr(),
+        CString::new("frag_keyframe+empty_moov+default_base_moof").expect("valid c str").as_ptr(),
         0,
     );
     assert!(sys::avformat_write_header(ofmt_ctx,  &mut opts) >= 0);
@@ -195,11 +195,40 @@ unsafe fn remux(
 ///////////////////////////////////////////////////////////////////////////////
 
 pub fn main() {
-    // // let input_path = "assets/samples/test.h264";
-    // let input_path = "assets/samples/sintel_trailer.1080p.mp4";
-    // let output_path = "assets/output/test.mp4";
-    // unsafe {
-    //     remux(input_path, output_path);
-    // };
-    eprintln!("TODO: CLI interface, for now just the example code is provided.");
+    // HELPER FUNCTION
+    pub fn path_exists(path: &str) -> bool {
+        std::fs::metadata(path).is_ok()
+    }
+    // CLI Example:
+    // ```
+    // cargo run --example remux -- \
+    //     assets/samples/sintel_trailer.1080p.mp4 assets/output/test.mp4
+    // ``` 
+    fn run() -> Result<(), String> {
+        let args = std::env::args().collect::<Vec<_>>();
+        let input_path = args
+            .get(1)
+            .ok_or(String::from("missing input argument"))?
+            .as_ref();
+        let output_path = args
+            .get(2)
+            .ok_or(String::from("missing output argument"))?
+            .as_ref();
+        if !path_exists(input_path) {
+            return Err(String::from("missing input file"))
+        }
+        unsafe {
+            remux(
+                input_path,
+                output_path
+            );
+        };
+        Ok(())
+    }
+    match run() {
+        Ok(()) => (),
+        Err(msg) => {
+            eprintln!("[failed] {:?}", msg);
+        }
+    }
 }
