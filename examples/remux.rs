@@ -68,18 +68,18 @@ unsafe fn remux(
         &mut ofmt_ctx,
         std::ptr::null_mut(),
         std::ptr::null_mut(),
-        input_path_cstr.as_ptr(),
+        output_path_cstr.as_ptr(),
     ) >= 0);
     // OUTPUT META
     let mut ofmt: *mut sys::AVOutputFormat = (*ofmt_ctx).oformat;
 
     // STREAM TRACKER
-    let mut stream_mapping_size: u32 = (*ifmt_ctx).nb_streams;
+    let stream_mapping_size: u32 = (*ifmt_ctx).nb_streams;
     let mut stream_mapping: Vec<i32> = vec![0; stream_mapping_size as usize];
 
     // SOURCE TO DEST STREAMS
     let input_streams = {
-        let len = (*ifmt_ctx).nb_streams as usize;
+        let len = stream_mapping_size as usize;
         std::slice::from_raw_parts((*ifmt_ctx).streams, len)
             .iter()
             .map(|x| (*x).as_ref().expect("not null"))
@@ -116,8 +116,16 @@ unsafe fn remux(
         );
         assert!(status >= 0);
     }
-    // WITE OUTPUT
-    assert!(sys::avformat_write_header(ofmt_ctx, std::ptr::null_mut()) >= 0);
+
+    // WRITE OUTPUT
+    let mut opts: *mut ffmpeg::AVDictionary = ptr::null_mut();
+    ffmpeg::av_dict_set(
+        &mut opts,
+        CString::new("movflags")?.as_ptr(),
+        CString::new("frag_keyframe+empty_moov+default_base_moof")?.as_ptr(),
+        0,
+    );
+    assert!(sys::avformat_write_header(ofmt_ctx,  &mut opts) >= 0);
     let mut status = 0;
     loop {
         if sys::av_read_frame(ifmt_ctx, &mut pkt) != 0 {
