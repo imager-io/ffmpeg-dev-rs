@@ -68,18 +68,18 @@ unsafe fn remux(
         &mut ofmt_ctx,
         std::ptr::null_mut(),
         std::ptr::null_mut(),
-        input_path_cstr.as_ptr(),
+        output_path_cstr.as_ptr(),
     ) >= 0);
     // OUTPUT META
     let mut ofmt: *mut sys::AVOutputFormat = (*ofmt_ctx).oformat;
 
     // STREAM TRACKER
-    let mut stream_mapping_size: u32 = (*ifmt_ctx).nb_streams;
+    let stream_mapping_size: u32 = (*ifmt_ctx).nb_streams;
     let mut stream_mapping: Vec<i32> = vec![0; stream_mapping_size as usize];
 
     // SOURCE TO DEST STREAMS
     let input_streams = {
-        let len = (*ifmt_ctx).nb_streams as usize;
+        let len = stream_mapping_size as usize;
         std::slice::from_raw_parts((*ifmt_ctx).streams, len)
             .iter()
             .map(|x| (*x).as_ref().expect("not null"))
@@ -116,8 +116,16 @@ unsafe fn remux(
         );
         assert!(status >= 0);
     }
-    // WITE OUTPUT
-    assert!(sys::avformat_write_header(ofmt_ctx, std::ptr::null_mut()) >= 0);
+
+    // WRITE OUTPUT
+    let mut opts: *mut ffmpeg_dev::sys::AVDictionary = std::ptr::null_mut();
+    ffmpeg_dev::sys::av_dict_set(
+        &mut opts,
+        c_str("movflags").as_ptr(),
+        c_str("frag_keyframe+empty_moov+default_base_moof").as_ptr(),
+        0,
+    );
+    assert!(sys::avformat_write_header(ofmt_ctx,  &mut opts) >= 0);
     let mut status = 0;
     loop {
         if sys::av_read_frame(ifmt_ctx, &mut pkt) != 0 {
@@ -187,11 +195,40 @@ unsafe fn remux(
 ///////////////////////////////////////////////////////////////////////////////
 
 pub fn main() {
-    // // let input_path = "assets/samples/test.h264";
-    // let input_path = "assets/samples/sintel_trailer.1080p.mp4";
-    // let output_path = "assets/output/test.mp4";
-    // unsafe {
-    //     remux(input_path, output_path);
-    // };
-    eprintln!("TODO: CLI interface, for now just the example code is provided.");
+    // HELPER FUNCTION
+    pub fn path_exists(path: &str) -> bool {
+        std::fs::metadata(path).is_ok()
+    }
+    // CLI Example:
+    // ```
+    // cargo run --example remux -- \
+    //     assets/samples/sintel_trailer.1080p.mp4 assets/output/test.mp4
+    // ``` 
+    fn run() -> Result<(), String> {
+        let args = std::env::args().collect::<Vec<_>>();
+        let input_path = args
+            .get(1)
+            .ok_or(String::from("missing input argument"))?
+            .as_ref();
+        let output_path = args
+            .get(2)
+            .ok_or(String::from("missing output argument"))?
+            .as_ref();
+        if !path_exists(input_path) {
+            return Err(String::from("missing input file"))
+        }
+        unsafe {
+            remux(
+                input_path,
+                output_path
+            );
+        };
+        Ok(())
+    }
+    match run() {
+        Ok(()) => (),
+        Err(msg) => {
+            eprintln!("[failed] {:?}", msg);
+        }
+    }
 }
