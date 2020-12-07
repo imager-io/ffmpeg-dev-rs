@@ -11,9 +11,15 @@ repository = "https://github.com/imager-io/ffmpeg-dev-rs"
 readme = "README.md"
 exclude = ["assets", "examples"]
 
+[features]
+default = []
+gpl = []
+x264 = ["x264-dev"]
+
 [dependencies]
 libc = "^0.2"
 num_cpus = "1.11.1"
+x264-dev = { path = "../x264-dev", optional = true }
 
 [build-dependencies]
 tar = "0.4.26"

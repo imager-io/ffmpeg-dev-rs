@@ -1,10 +1,12 @@
 #![allow(unused)]
 
+use std::env;
 use std::iter::FromIterator;
 use std::collections::HashSet;
 use std::convert::AsRef;
 use std::path::{PathBuf, Path};
 use std::string::ToString;
+use std::process::Command;
 use tar::Archive;
 use flate2::read::GzDecoder;
 
@@ -238,25 +240,52 @@ fn build() {
                 "--disable-doc",
                 "--disable-autodetect",
             ];
+
+            let mut pkg_config_path = env::var_os("PKG_CONFIG_PATH");
+
+            if env::var_os("CARGO_FEATURE_GPL").is_some() {
+                configure_flags.push("--enable-gpl");
+            }
+
+            if env::var_os("CARGO_FEATURE_X264").is_some() {
+                configure_flags.push("--enable-libx264");
+
+                let x264_libs = env::var_os("DEP_X264_LIBS").unwrap();
+                println!("cargo:rustc-link-search=native={}", x264_libs.to_str().expect("PathBuf to str"));
+                println!("cargo:rustc-link-lib=static=x264");
+
+                let mut x264_pkg_config = env::var_os("DEP_X264_PKGCONFIG").unwrap();
+
+                // append existing pkg_config path - make sure x264's pkgconfig has precedence:
+                if let Some(path) = pkg_config_path {
+                    x264_pkg_config.push(":");
+                    x264_pkg_config.push(path);
+                }
+
+                pkg_config_path = Some(x264_pkg_config);
+            }
+
             // TRY TO SPEED THIS UP FOR DEV BUILDS
             if is_debug_mode() && opt_level_eq(0) {
                 configure_flags.push("--disable-optimizations");
-                configure_flags.push("--disable-debug");
+                configure_flags.push("--enable-debug");
                 configure_flags.push("--disable-stripping");
             }
-            let eval_configure = |flags: Vec<&str>| {
-                let flags = flags.join(" ");
-                std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg(&format!(
-                        "cd {path} && ./configure {flags}",
-                        path=source_path.to_str().expect("PathBuf to str"),
-                        flags=flags,
-                    ))
+
+            let eval_configure = |flags: &[&str]| {
+                let mut configure = Command::new("./configure");
+
+                if let Some(path) = &pkg_config_path {
+                    configure.env("PKG_CONFIG_PATH", path);
+                }
+
+                configure
+                    .current_dir(&source_path)
+                    .args(flags)
                     .output()
-                    .expect(&format!("ffmpeg configure script"))
+                    .expect("ffmpeg configure script")
             };
-            let result = eval_configure(configure_flags.clone());
+            let result = eval_configure(&configure_flags);
             if !result.status.success() {
                 let stderr = String::from_utf8(result.stderr).expect("invalid str");
                 let stdout = String::from_utf8(result.stdout).expect("invalid str");
@@ -267,7 +296,7 @@ fn build() {
                 // MAYBE RETRY (USE CRIPPLED BUILD)
                 if nasm_yasm_issue {
                     configure_flags.push("--disable-x86asm");
-                    let result = eval_configure(configure_flags);
+                    let result = eval_configure(&configure_flags);
                     if !result.status.success() {
                         let stderr = String::from_utf8(result.stderr).expect("invalid str");
                         let stdout = String::from_utf8(result.stdout).expect("invalid str");
